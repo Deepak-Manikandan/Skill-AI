@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillMatch AI – Resume & Job Matcher</title>
+    <meta name="description" content="AI-powered resume and job description analyzer using TF-IDF vectorization and skill gap identification.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <!-- Header / Navbar -->
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="{{ url_for('index') }}" class="brand-logo">
+                <div class="logo-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <span class="brand-title">SkillMatch<span class="brand-accent">AI</span></span>
+                    <span class="brand-tag">TF-IDF Vector Engine</span>
+                </div>
+            </a>
+            <div class="nav-links">
+                <a href="#analyzer-section" class="btn btn-primary btn-sm">Analyze Resume</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="container hero-container">
+                <div class="badge-pill">
+                    <span class="badge-dot"></span>
+                    Portfolio Project • Machine Learning & Data Science
+                </div>
+                <h1 class="hero-heading">Your Skills. Your Next Opportunity.</h1>
+                <p class="hero-subtitle">
+                    SkillMatch AI evaluates how well your resume matches a target job description using 
+                    <strong>scikit-learn TF-IDF vectorization</strong> and <strong>cosine similarity</strong>. 
+                    Uncover exact matched skills, discover critical missing requirements, and receive actionable suggestions.
+                </p>
+                <div class="hero-actions">
+                    <a href="#analyzer-section" class="btn btn-primary btn-lg">
+                        <span>Analyze My Resume</span>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </a>
+                    <a href="#how-it-works" class="btn btn-outline btn-lg">How It Works</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="container message-container">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                            <span>{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Analyzer Form Section -->
+        <section id="analyzer-section" class="analyzer-section">
+            <div class="container">
+                <div class="section-header text-center">
+                    <h2 class="section-title">Resume & Job Description Analysis</h2>
+                    <p class="section-desc">Upload a PDF or paste your resume alongside a job listing. Testing? Use the sample buttons below!</p>
+                </div>
+
+                <!-- Sample Data Quick Buttons -->
+                <div class="sample-bar">
+                    <span class="sample-label">Quick Test Presets:</span>
+                    <button type="button" class="btn-sample" onclick="loadSample('ml_intern')">
+                        ML Intern
+                    </button>
+                    <button type="button" class="btn-sample" onclick="loadSample('python_dev')">
+                        Python Developer
+                    </button>
+                    <button type="button" class="btn-sample" onclick="loadSample('data_analyst')">
+                        Data Analyst
+                    </button>
+                    <button type="button" class="btn-sample btn-sample-clear" onclick="clearFields()">
+                        Clear
+                    </button>
+                </div>
+
+                <form action="{{ url_for('analyze') }}" method="POST" enctype="multipart/form-data" class="analyzer-form" id="matchForm">
+                    <div class="form-grid">
+                        
+                        <!-- Column 1: Resume Input -->
+                        <div class="card form-card">
+                            <div class="card-header">
+                                <div class="step-badge">1</div>
+                                <div>
+                                    <h3 class="card-title">Candidate Resume</h3>
+                                    <p class="card-subtitle">Upload a PDF resume or paste plain text</p>
+                                </div>
+                            </div>
+
+                            <!-- Tabs for Upload / Paste -->
+                            <div class="input-toggle">
+                                <button type="button" class="toggle-btn active" id="tabUploadBtn" onclick="switchResumeTab('upload')">
+                                    Upload PDF
+                                </button>
+                                <button type="button" class="toggle-btn" id="tabPasteBtn" onclick="switchResumeTab('paste')">
+                                    Paste Text
+                                </button>
+                            </div>
+
+                            <!-- Upload Pane -->
+                            <div id="uploadPane" class="tab-pane active">
+                                <div class="drop-zone" id="dropZone">
+                                    <input type="file" name="resume_file" id="resumeFileInput" accept=".pdf" class="file-input">
+                                    <div class="drop-content">
+                                        <div class="drop-icon">
+                                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                                <polyline points="17 8 12 3 7 8"></polyline>
+                                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                                            </svg>
+                                        </div>
+                                        <p class="drop-text">Drag & drop your resume PDF here, or <span class="highlight">browse</span></p>
+                                        <p class="drop-hint">PDF format only • Up to 5 MB</p>
+                                    </div>
+                                    <div class="file-preview-pill" id="filePreview" style="display: none;">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        </svg>
+                                        <span id="fileNameDisplay">filename.pdf</span>
+                                        <button type="button" class="btn-remove-file" onclick="removeSelectedFile(event)">&times;</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Paste Text Pane -->
+                            <div id="pastePane" class="tab-pane">
+                                <label for="resume_text" class="field-label">Resume Content</label>
+                                <textarea name="resume_text" id="resume_text" rows="12" class="form-control" placeholder="Paste your resume sections, skills, work history, and projects here..."></textarea>
+                                <div class="textarea-hint">Tip: Include technical skills, project details, and tools used.</div>
+                            </div>
+                        </div>
+
+                        <!-- Column 2: Job Description Input -->
+                        <div class="card form-card">
+                            <div class="card-header">
+                                <div class="step-badge">2</div>
+                                <div>
+                                    <h3 class="card-title">Job Description</h3>
+                                    <p class="card-subtitle">Paste target role requirements and responsibilities</p>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="job_title" class="field-label">Job Title <span class="text-muted">(Optional)</span></label>
+                                <input type="text" name="job_title" id="job_title" class="form-control" placeholder="e.g. Machine Learning Engineer or Junior Python Developer">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="job_description" class="field-label">Job Description Text <span class="text-danger">*</span></label>
+                                <textarea name="job_description" id="job_description" rows="11" class="form-control" required placeholder="Paste the complete job description, required qualifications, and technical stack here..."></textarea>
+                                <div class="textarea-hint">Minimum 15 words for meaningful text-similarity calculation.</div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Submit Action Bar -->
+                    <div class="form-actions text-center">
+                        <button type="submit" class="btn btn-primary btn-xl" id="submitBtn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                            </svg>
+                            <span>Analyze Match & Skill Gap</span>
+                        </button>
+                        <p class="form-disclaimer">
+                            Local processing via Python & scikit-learn. No data is permanently stored.
+                        </p>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- Feature Cards -->
+        <section id="how-it-works" class="features-section">
+            <div class="container">
+                <div class="section-header text-center">
+                    <span class="section-tag">Architecture</span>
+                    <h2 class="section-title">How SkillMatch AI Works</h2>
+                    <p class="section-desc">Transparent machine learning pipeline built with standard data science tooling.</p>
+                </div>
+
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon feature-icon-indigo">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="feature-title">TF-IDF Vectorization</h3>
+                        <p class="feature-text">
+                            Transforms raw resume text and job postings into numerical feature vectors using Term Frequency-Inverse Document Frequency, giving weight to distinguishing technical terms while filtering stop words.
+                        </p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon feature-icon-cyan">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="m4.93 4.93 4.24 4.24"></path>
+                                <path d="m14.83 9.17 4.24-4.24"></path>
+                                <path d="m14.83 14.83 4.24 4.24"></path>
+                                <path d="m9.17 14.83-4.24 4.24"></path>
+                            </svg>
+                        </div>
+                        <h3 class="feature-title">Cosine Similarity</h3>
+                        <p class="feature-text">
+                            Computes the cosine angle between multidimensional text vectors. This produces an objective 0–100% vocabulary alignment score independent of document length variations.
+                        </p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon feature-icon-emerald">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                        </div>
+                        <h3 class="feature-title">Skill-Gap Identification</h3>
+                        <p class="feature-text">
+                            Extracts 45+ technical competencies with alias resolution (e.g. "scikit learn" = "scikit-learn") to accurately display matched, missing, and bonus skills in visual color-coded badges.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-container">
+            <div class="footer-left">
+                <span class="footer-brand">SkillMatch AI</span>
+                <span class="footer-copy">Third-Year Artificial Intelligence & Data Science Engineering Portfolio Project</span>
+            </div>
+            <div class="footer-right">
+                <span>Built with Python • Flask • scikit-learn • pypdf</span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

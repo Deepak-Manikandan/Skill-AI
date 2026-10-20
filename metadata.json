@@ -1,0 +1,6 @@
+{
+  "name": "SkillMatch AI – Resume & Job Matcher",
+  "description": "An AI-powered portfolio project that matches resumes to job descriptions using TF-IDF vectorization and cosine similarity, extracting matched and missing technical skills with tailored recommendations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
