@@ -6,6 +6,7 @@
 **Academic Domain:** Natural Language Processing (NLP) & Applied Machine Learning  
 **Project Status:** Fully Implemented & Deployed  
 **Technology Stack:** Python 3.10+, Flask, scikit-learn, NLTK, pypdf, HTML5, CSS3, Tailwind CSS  
+**Live url**:**https://skill-ai-two.vercel.app/**
 
 ---
 
